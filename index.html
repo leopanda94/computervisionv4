@@ -1,70 +1,60 @@
 <!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <title>Mon modèle Teachable Machine</title>
-  <style>
-    body { font-family: sans-serif; text-align: center; margin-top: 40px; }
-    video { width: 300px; border-radius: 10px; }
-    #label-container { margin-top: 20px; font-size: 1.5em; }
-  </style>
-</head>
-<body>
-  <h1>Détection avec Teachable Machine</h1>
-  <video id="webcam" autoplay playsinline></video>
-  <div id="label-container"></div>
+<html>
+  <head>
+    <title>Détection avec Teachable Machine</title>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
+    <style>
+      body { text-align: center; font-family: sans-serif; }
+      video, canvas { border: 1px solid #ccc; margin-top: 10px; }
+    </style>
+  </head>
+  <body>
+    <h1>Détection avec Webcam</h1>
+    <video id="webcam" autoplay playsinline width="224" height="224"></video>
+    <div id="label-container"></div>
 
-  <!-- Charger TensorFlow.js -->
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0"></script>
-  <!-- Charger le modèle Teachable Machine -->
-  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8.4/dist/teachablemachine-image.min.js"></script>
+    <script type="text/javascript">
+      const URL = "./model/"; // ← dossier contenant model.json et les .bin
 
-  <script>
-    const URL = "./model/"; // dossier du modèle
+      let model, webcam, labelContainer, maxPredictions;
 
-    let model, webcam, labelContainer, maxPredictions;
+      async function init() {
+        const modelURL = URL + "model.json";
+        const metadataURL = URL + "metadata.json";
 
-    async function init() {
-      const modelURL = URL + "model.json";
-      const metadataURL = URL + "metadata.json";
+        model = await tmImage.load(modelURL, metadataURL);
+        maxPredictions = model.getTotalClasses();
 
-      // Charge le modèle
-      model = await tmImage.load(modelURL, metadataURL);
-      maxPredictions = model.getTotalClasses();
+        webcam = new tmImage.Webcam(224, 224, true); // width, height, flip
+        await webcam.setup();
+        await webcam.play();
+        window.requestAnimationFrame(loop);
 
-      // Configure la webcam
-      const flip = true;
-      webcam = new tmImage.Webcam(300, 300, flip);
-      await webcam.setup(); // demande l'autorisation de la webcam
-      await webcam.play();
-      window.requestAnimationFrame(loop);
+        document.getElementById("webcam").appendChild(webcam.canvas);
 
-      // Affiche la webcam
-      document.getElementById("webcam").appendChild(webcam.canvas);
-
-      // Prépare l'affichage des prédictions
-      labelContainer = document.getElementById("label-container");
-      for (let i = 0; i < maxPredictions; i++) {
-        labelContainer.appendChild(document.createElement("div"));
+        labelContainer = document.getElementById("label-container");
+        for (let i = 0; i < maxPredictions; i++) {
+          labelContainer.appendChild(document.createElement("div"));
+        }
       }
-    }
 
-    async function loop() {
-      webcam.update();
-      await predict();
-      window.requestAnimationFrame(loop);
-    }
-
-    async function predict() {
-      const prediction = await model.predict(webcam.canvas);
-      for (let i = 0; i < maxPredictions; i++) {
-        const classPrediction =
-          prediction[i].className + ": " + (prediction[i].probability * 100).toFixed(1) + "%";
-        labelContainer.childNodes[i].innerText = classPrediction;
+      async function loop() {
+        webcam.update();
+        await predict();
+        window.requestAnimationFrame(loop);
       }
-    }
 
-    init(); // démarre l'application
-  </script>
-</body>
+      async function predict() {
+        const prediction = await model.predict(webcam.canvas);
+        for (let i = 0; i < maxPredictions; i++) {
+          const classPrediction = `${prediction[i].className}: ${(
+            prediction[i].probability * 100
+          ).toFixed(2)}%`;
+          labelContainer.childNodes[i].innerText = classPrediction;
+        }
+      }
+
+      init();
+    </script>
+  </body>
 </html>
