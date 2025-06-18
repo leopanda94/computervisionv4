@@ -4,16 +4,43 @@
   <meta charset="UTF-8">
   <title>Mon modèle Teachable Machine</title>
   <style>
-    body { font-family: sans-serif; text-align: center; margin-top: 40px; }
-    video { width: 300px; border-radius: 10px; }
-    #label-container { margin-top: 20px; font-size: 1.5em; }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      text-align: center;
+      padding: 40px;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    video {
+      border: 4px solid #333;
+      border-radius: 10px;
+      width: 480px;
+      height: 360px;
+    }
   </style>
 </head>
 <body>
   <h1>Détection avec Teachable Machine</h1>
   <video id="webcam" autoplay playsinline></video>
-  <div id="label-container"></div>
+  <script>
+    const webcamElement = document.getElementById('webcam');
 
+    async function startWebcam() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        webcamElement.srcObject = stream;
+      } catch (error) {
+        alert("Erreur : accès à la caméra refusé ou non disponible.");
+        console.error("Erreur webcam :", error);
+      }
+    }
+
+    startWebcam();
+  </script>
   <!-- Charger TensorFlow.js -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0"></script>
   <!-- Charger le modèle Teachable Machine -->
